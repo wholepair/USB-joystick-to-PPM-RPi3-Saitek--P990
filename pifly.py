@@ -49,10 +49,11 @@ def readjoythread(pinst, waves):
                 output[JOYB[evt.button]] = -1 if evt.type == JOYBUTTONUP else 1
                 haschanged = True
         if haschanged:
-            processoutput(output[:], pinst, waves)
+            thread.start_new_thread(processoutput,(output[:]))
 
-def processoutput(channels, pinst, waves):
+def processoutput(channels):
     """process outout and send wave to pigpio"""
+    global pinst, waves
     if pigpio:
         pulses, pos = [], 0
         for value in channels:
@@ -77,6 +78,7 @@ def processoutput(channels, pinst, waves):
 
 def main():
     """Main Entry point"""
+    global pinst, waves
     if pigpio:
         pinst = pigpio.pi()
         pinst.set_mode(PI_PPM, pigpio.OUTPUT)

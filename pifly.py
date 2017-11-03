@@ -78,7 +78,7 @@ def processoutput(channels, pinst, waves):
 def main():
     """Main Entry point"""
     if pigpio:
-        pinst = pigpio.pi('test')
+        pinst = pigpio.pi()
         pinst.set_mode(PI_PPM, pigpio.OUTPUT)
         pinst.wave_add_generic([pigpio.pulse(PI_GPIO, 0, 2000)])
         # padding to make deleting logic easier

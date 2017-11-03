@@ -16,9 +16,20 @@ except ImportError as err:
 RUNNING = False
 PI_PPM = 24
 PI_GPIO = 1 << PI_PPM
-JOYA = [0, 1, 2, 3]
-JOYB = [4, 5, 6, 7]
 
+# array index is axis > ppm channel, -1 to skip
+# this example, asign joy axis 0 to chanel 0, joy axis 1 to chanel 1 etc. etc. 
+# AETR presumed x = 0, y = 1, twist = 2, throttle = 3
+JOYA = [0, 1, 3, 2]
+# a 5 axis joystick ignoring axis 2 would be as follows
+#JOYA = [0, 1, -1, 2, 3]
+# a 4 axis joystick swapping axies 0 and 1 would be as follows
+#JOYA = [1, 0, 2, 3]
+
+
+# array index is button > ppm channel, -1 to skip
+# this example, asign joy button 0 to chanel 4, joy button 1 to chanel 5 etc. etc. 
+JOYB = [4, 5, 6, 7]
 def readjoythread(pinst, waves):
     """Read joystick loop and pass result onto processor"""
     output = [0, 0, 0, 0, 0, 0, 0, 0]

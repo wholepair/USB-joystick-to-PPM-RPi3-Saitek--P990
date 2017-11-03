@@ -62,16 +62,16 @@ def processoutput(channels, pinst, waves):
                        pigpio.pulse(PI_GPIO, 0, uss - 300)]
             pos += uss
 
-            pulses += [pigpio.pulse(0, PI_GPIO, 300),
-                       pigpio.pulse(PI_GPIO, 0, 20000 - 300 - pos - 1)]
+        pulses += [pigpio.pulse(0, PI_GPIO, 300),
+                   pigpio.pulse(PI_GPIO, 0, 20000 - 300 - pos - 1)]
 
-            pinst.wave_add_generic(pulses)
-            waves.append(pinst.wave_create())
-            pinst.wave_send_using_mode(waves[-1], pigpio.WAVE_MODE_REPEAT_SYNC)
+        pinst.wave_add_generic(pulses)
+        waves.append(pinst.wave_create())
+        pinst.wave_send_using_mode(waves[-1], pigpio.WAVE_MODE_REPEAT_SYNC)
 
-            last, waves = waves[0], waves[1:]
-            if last:
-                pinst.wave_delete(last)
+        last, waves = waves[0], waves[1:]
+        if last:
+            pinst.wave_delete(last)
     else:
         logging.warn(channels)
 

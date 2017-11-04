@@ -3,7 +3,7 @@ import thread
 import logging
 import time
 import pygame
-from pygame import joystick, event, JOYAXISMOTION
+from pygame import joystick, event, JOYAXISMOTION, JOYHATMOTION
 from pygame import JOYBUTTONUP, JOYBUTTONDOWN
 
 try:
@@ -12,15 +12,15 @@ except ImportError as err:
     logging.warn(err, exc_info=True)
     logging.warn("Failed to load pigpio library, running in debug mode")
     pigpio = None
-pigpio = None
+#pigpio = None
 RUNNING = False
 PI_PPM = 24
 PI_GPIO = 1 << PI_PPM
 
 pinst = None
 waves = [None, None, None]
-channelsglb =[0, 0, 0, 0, 0, 0, 0, 0]
-
+channelsglb = [0, 0, 0, 0, 0, 0, 0, 0]
+trimglb = [0, 0, 0, 0, 0, 0, 0, 0]
 # array index is axis > ppm channel, -1 to skip
 # this example, asign joy axis 0 to chanel 0, joy axis 1 to chanel 1 etc. etc.
 # AETR presumed x = 0, y = 1, twist = 2, throttle = 3
@@ -36,8 +36,9 @@ JOYA = [0, 1, 3, 2]
 JOYB = [4, 5, 6, 7]
 def readjoythread():
     """Read joystick loop and pass result onto processor"""
-    global channelsglb
+    global channelsglb, trimglb
     output = [0, 0, 0, 0, 0, 0, 0, 0]
+    trim = [0, 0, 0, 0, 0, 0, 0, 0]
     joystick.init()
     joystick.Joystick(0).init()
     time.sleep(1)
@@ -61,19 +62,27 @@ def readjoythread():
             if evt.axis < len(JOYA) and JOYA[evt.axis] > -1:
                 output[JOYA[evt.axis]] = round(evt.value, 4)
                 haschanged = True
+        if evt.type == JOYHATMOTION:
+            trim[0] = trim[0] + round((evt.value[0] * .01), 4)
+            trim[1] = trim[1] + 0 - (round((evt.value[1] * .01), 4))
+            haschanged = True
         elif evt.type == JOYBUTTONUP or evt.type == JOYBUTTONDOWN:
             if evt.button < len(JOYB) and JOYB[evt.button] > -1:
                 output[JOYB[evt.button]] = -1 if evt.type == JOYBUTTONUP else 1
                 haschanged = True
         if haschanged:
             channelsglb=output[:]
-
+            trimglb=trim[:]
 def processoutput():
     """process outout and send wave to pigpio"""
-    global pinst, waves, channelsglb
+    global pinst, waves, channelsglb, trimglb
     
     while RUNNING:
         channels = channelsglb[:]
+        trim = trimglb[:]
+        for i in range(0, len(channels)):
+            channels[i] = round(channels[i] + trim[i],4)
+
         if pigpio:
             pulses, pos = [], 0
             for value in channels:

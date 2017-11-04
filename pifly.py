@@ -71,6 +71,7 @@ def readjoythread():
                 output[JOYB[evt.button]] = -1 if evt.type == JOYBUTTONUP else 1
                 haschanged = True
         if haschanged:
+            pinst.write(16,1)
             channelsglb=output[:]
             trimglb=trim[:]
 def processoutput():
@@ -78,6 +79,7 @@ def processoutput():
     global pinst, waves, channelsglb, trimglb
     
     while RUNNING:
+        pinst.write(16,0)
         channels = channelsglb[:]
         trim = trimglb[:]
         for i in range(0, len(channels)):
@@ -110,11 +112,11 @@ def processoutput():
                 outputchan.append(uss)
             logging.warn(channels)
             logging.warn(outputchan)
-        time.sleep(.1)    
+        time.sleep(.02)    
 
 def main():
     """Main Entry point"""
-    global pinst, waves
+    global pinst,pinst2, waves
     if pigpio:
         pinst = pigpio.pi()
         pinst.set_mode(PI_PPM, pigpio.OUTPUT)

@@ -63,7 +63,7 @@ def readjoythread():
                 output[JOYB[evt.button]] = -1 if evt.type == JOYBUTTONUP else 1
                 haschanged = True
         if haschanged:
-            thread.start_new_thread(processoutput, [output[:]])
+            processoutput(output[:])
 
 def processoutput(channels):
     """process outout and send wave to pigpio"""

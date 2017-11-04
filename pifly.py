@@ -12,7 +12,7 @@ except ImportError as err:
     logging.warn(err, exc_info=True)
     logging.warn("Failed to load pigpio library, running in debug mode")
     pigpio = None
-
+pigpio = None
 RUNNING = False
 PI_PPM = 24
 PI_GPIO = 1 << PI_PPM
@@ -72,7 +72,7 @@ def processoutput(channels):
         pulses, pos = [], 0
         for value in channels:
             # calibrated with Taranis to [-99.6..0..99.4]
-            uss = int(round(1333 + 453 * value))
+            uss = int(round(1500 + 453 * value))
             pulses += [pigpio.pulse(0, PI_GPIO, 300),
                        pigpio.pulse(PI_GPIO, 0, uss - 300)]
             pos += uss
@@ -88,7 +88,13 @@ def processoutput(channels):
         if last:
             pinst.wave_delete(last)
     else:
+        outputchan = []
+        for value in channels:
+            # calibrated with Taranis to [-99.6..0..99.4]
+            uss = int(round(1500 + 453 * value))
+            outputchan.append(uss)
         logging.warn(channels)
+        logging.warn(outputchan)
 
 def main():
     """Main Entry point"""

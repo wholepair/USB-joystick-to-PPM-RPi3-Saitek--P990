@@ -17,8 +17,11 @@ RUNNING = False
 PI_PPM = 24
 PI_GPIO = 1 << PI_PPM
 
+pinst = None
+waves = [None, None, None]
+
 # array index is axis > ppm channel, -1 to skip
-# this example, asign joy axis 0 to chanel 0, joy axis 1 to chanel 1 etc. etc. 
+# this example, asign joy axis 0 to chanel 0, joy axis 1 to chanel 1 etc. etc.
 # AETR presumed x = 0, y = 1, twist = 2, throttle = 3
 JOYA = [0, 1, 3, 2]
 # a 5 axis joystick ignoring axis 2 would be as follows
@@ -28,9 +31,9 @@ JOYA = [0, 1, 3, 2]
 
 
 # array index is button > ppm channel, -1 to skip
-# this example, asign joy button 0 to chanel 4, joy button 1 to chanel 5 etc. etc. 
+# this example, asign joy button 0 to chanel 4, joy button 1 to chanel 5 etc. etc.
 JOYB = [4, 5, 6, 7]
-def readjoythread(pinst, waves):
+def readjoythread():
     """Read joystick loop and pass result onto processor"""
     output = [0, 0, 0, 0, 0, 0, 0, 0]
     joystick.init()
@@ -46,7 +49,7 @@ def readjoythread(pinst, waves):
     for chan in JOYB:
         output[chan] = -1
 
-    processoutput(output[:], pinst, waves)
+    processoutput(output[:])
 
     while RUNNING:
         haschanged = False
@@ -60,7 +63,7 @@ def readjoythread(pinst, waves):
                 output[JOYB[evt.button]] = -1 if evt.type == JOYBUTTONUP else 1
                 haschanged = True
         if haschanged:
-            thread.start_new_thread(processoutput,(output[:]))
+            thread.start_new_thread(processoutput, [output[:]])
 
 def processoutput(channels):
     """process outout and send wave to pigpio"""
@@ -99,7 +102,7 @@ def main():
         pinst.wave_send_repeat(waves[-1])
 
     pygame.init()
-    thread.start_new_thread(readjoythread, (pinst, waves))
+    thread.start_new_thread(readjoythread, ())
     while RUNNING:
         time.sleep(.02)
 

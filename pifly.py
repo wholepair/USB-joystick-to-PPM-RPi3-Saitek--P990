@@ -19,6 +19,7 @@ PI_GPIO = 1 << PI_PPM
 
 pinst = None
 waves = [None, None, None]
+channels =[1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500]
 
 # array index is axis > ppm channel, -1 to skip
 # this example, asign joy axis 0 to chanel 0, joy axis 1 to chanel 1 etc. etc.
@@ -35,9 +36,11 @@ JOYA = [0, 1, 3, 2]
 JOYB = [4, 5, 6, 7]
 def readjoythread():
     """Read joystick loop and pass result onto processor"""
+    global channels
     output = [0, 0, 0, 0, 0, 0, 0, 0]
     joystick.init()
     joystick.Joystick(0).init()
+    time.sleep(1)
     for evt in pygame.event.get():
         time.sleep(.02)
 
@@ -49,7 +52,7 @@ def readjoythread():
     for chan in JOYB:
         output[chan] = -1
 
-    processoutput(output[:])
+    channels = output[:]
 
     while RUNNING:
         haschanged = False
@@ -63,38 +66,40 @@ def readjoythread():
                 output[JOYB[evt.button]] = -1 if evt.type == JOYBUTTONUP else 1
                 haschanged = True
         if haschanged:
-            processoutput(output[:])
+            channels=output[:]
 
-def processoutput(channels):
+def processoutput():
     """process outout and send wave to pigpio"""
-    global pinst, waves
-    if pigpio:
-        pulses, pos = [], 0
-        for value in channels:
-            # calibrated with Taranis to [-99.6..0..99.4]
-            uss = int(round(1500 + 453 * value))
+    global pinst, waves, channels
+    while RUNNING:
+        if pigpio:
+            pulses, pos = [], 0
+            for value in channels:
+                # calibrated with Taranis to [-99.6..0..99.4]
+                uss = int(round(1500 + 453 * value))
+                pulses += [pigpio.pulse(0, PI_GPIO, 300),
+                        pigpio.pulse(PI_GPIO, 0, uss - 300)]
+                pos += uss
+
             pulses += [pigpio.pulse(0, PI_GPIO, 300),
-                       pigpio.pulse(PI_GPIO, 0, uss - 300)]
-            pos += uss
+                    pigpio.pulse(PI_GPIO, 0, 20000 - 300 - pos - 1)]
 
-        pulses += [pigpio.pulse(0, PI_GPIO, 300),
-                   pigpio.pulse(PI_GPIO, 0, 20000 - 300 - pos - 1)]
+            pinst.wave_add_generic(pulses)
+            waves.append(pinst.wave_create())
+            pinst.wave_send_using_mode(waves[-1], pigpio.WAVE_MODE_REPEAT_SYNC)
 
-        pinst.wave_add_generic(pulses)
-        waves.append(pinst.wave_create())
-        pinst.wave_send_using_mode(waves[-1], pigpio.WAVE_MODE_REPEAT_SYNC)
-
-        last, waves = waves[0], waves[1:]
-        if last:
-            pinst.wave_delete(last)
-    else:
-        outputchan = []
-        for value in channels:
-            # calibrated with Taranis to [-99.6..0..99.4]
-            uss = int(round(1500 + 453 * value))
-            outputchan.append(uss)
-        logging.warn(channels)
-        logging.warn(outputchan)
+            last, waves = waves[0], waves[1:]
+            if last:
+                pinst.wave_delete(last)
+        else:
+            outputchan = []
+            for value in channels:
+                # calibrated with Taranis to [-99.6..0..99.4]
+                uss = int(round(1500 + 453 * value))
+                outputchan.append(uss)
+            logging.warn(channels)
+            logging.warn(outputchan)
+        time.sleep(.2)    
 
 def main():
     """Main Entry point"""
@@ -109,6 +114,7 @@ def main():
 
     pygame.init()
     thread.start_new_thread(readjoythread, ())
+    thread.start_new_thread(processoutput, ())
     while RUNNING:
         time.sleep(.02)
 

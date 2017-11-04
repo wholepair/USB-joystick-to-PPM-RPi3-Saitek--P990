@@ -19,7 +19,7 @@ PI_GPIO = 1 << PI_PPM
 
 pinst = None
 waves = [None, None, None]
-channels =[1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500]
+channelsglb =[0, 0, 0, 0, 0, 0, 0, 0]
 
 # array index is axis > ppm channel, -1 to skip
 # this example, asign joy axis 0 to chanel 0, joy axis 1 to chanel 1 etc. etc.
@@ -36,7 +36,7 @@ JOYA = [0, 1, 3, 2]
 JOYB = [4, 5, 6, 7]
 def readjoythread():
     """Read joystick loop and pass result onto processor"""
-    global channels
+    global channelsglb
     output = [0, 0, 0, 0, 0, 0, 0, 0]
     joystick.init()
     joystick.Joystick(0).init()
@@ -52,7 +52,7 @@ def readjoythread():
     for chan in JOYB:
         output[chan] = -1
 
-    channels = output[:]
+    channelsglb = output[:]
 
     while RUNNING:
         haschanged = False
@@ -66,12 +66,14 @@ def readjoythread():
                 output[JOYB[evt.button]] = -1 if evt.type == JOYBUTTONUP else 1
                 haschanged = True
         if haschanged:
-            channels=output[:]
+            channelsglb=output[:]
 
 def processoutput():
     """process outout and send wave to pigpio"""
-    global pinst, waves, channels
+    global pinst, waves, channelsglb
+    
     while RUNNING:
+        channels = channelsglb[:]
         if pigpio:
             pulses, pos = [], 0
             for value in channels:
@@ -99,7 +101,7 @@ def processoutput():
                 outputchan.append(uss)
             logging.warn(channels)
             logging.warn(outputchan)
-        time.sleep(.2)    
+        time.sleep(.1)    
 
 def main():
     """Main Entry point"""

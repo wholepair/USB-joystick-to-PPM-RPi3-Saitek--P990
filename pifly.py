@@ -10,14 +10,14 @@ import signal
 try:
     import joyconfig
     joyconfig.path.insert(0, '/boot/joyconf')
-    from joyconfig import JOYA,JOYB
+    from joyconfig import JOY_AXIES,JOYB
 except ImportError as err:
     logging.warn(err, exc_info=True)
     logging.warn("Failed to load config using defult")
     # array index is axis > ppm channel, -1 to skip
     # this example, asign joy axis 0 to chanel 0, joy axis 1 to chanel 1 etc. etc.
     # AETR presumed x = 0, y = 1, twist = 2, throttle = 3
-    JOYA = [0, 1, 3, 2]
+    JOY_AXIES = [0, 1, 3, 2]
     # a 5 axis joystick ignoring axis 2 would be as follows
     #JOYA = [0, 1, -1, 2, 3]
     # a 4 axis joystick swapping axies 0 and 1 would be as follows
@@ -25,6 +25,7 @@ except ImportError as err:
     # array index is button > ppm channel, -1 to skip
     # this example, asign joy button 0 to chanel 4, joy button 1 to chanel 5 etc. etc.
     JOYB = [4, 5, 6, 7]
+    JOY_REVERSE = [False, False, False, False, False, False, False, False]
 
 try:
     import pigpio
@@ -32,7 +33,7 @@ except ImportError as err:
     logging.warn(err, exc_info=True)
     logging.warn("Failed to load pigpio library, running in debug mode")
     pigpio = None
-    
+
 #pigpio = None
 RUNNING = False
 PI_PPM = 24
@@ -54,11 +55,11 @@ def readjoythread():
     for evt in pygame.event.get():
         time.sleep(.02)
 
-    for i in range(0, len(JOYA)):
-        if JOYA[i] > -1:
-            output[JOYA[i]] = round(joystick.Joystick(0).get_axis(i), 4)
-            if output[JOYA[i]] is None:
-                output[JOYA[i]] = 0
+    for i in range(0, len(JOY_AXIES)):
+        if JOY_AXIES[i] > -1:
+            output[JOY_AXIES[i]] = round(joystick.Joystick(0).get_axis(i), 4)
+            if output[JOY_AXIES[i]] is None:
+                output[JOY_AXIES[i]] = 0
     for chan in JOYB:
         output[chan] = -1
 
@@ -68,8 +69,8 @@ def readjoythread():
         haschanged = False
         evt = event.wait()
         if evt.type == JOYAXISMOTION:
-            if evt.axis < len(JOYA) and JOYA[evt.axis] > -1:
-                output[JOYA[evt.axis]] = round(evt.value, 4)
+            if evt.axis < len(JOY_AXIES) and JOY_AXIES[evt.axis] > -1:
+                output[JOY_AXIES[evt.axis]] = round(evt.value, 4)
                 haschanged = True
         if evt.type == JOYHATMOTION:
             trim[0] = trim[0] + round((evt.value[0] * .01), 4)
@@ -90,7 +91,10 @@ def processoutput():
         channels = channelsglb[:]
         trim = trimglb[:]
         for i in range(0, len(channels)):
-            channels[i] = round(channels[i] + trim[i],4)
+            if JOY_REVERSE[i]:
+                channels[i] = round(0 - (channels[i] + trim[i]),4)
+            else:
+                channels[i] = round(channels[i] + trim[i],4)
 
         if pigpio:
             pulses, pos = [], 0

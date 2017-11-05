@@ -1,7 +1,8 @@
 #!/bin/bash
-# My first script
+# Start PiFly
 
 pigpiod
 cd flystick-futaba-tm-hotas
-git pull
-python pifly.py
+git pull &> /dev/null
+python pifly.py &
+cd -

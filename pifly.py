@@ -5,6 +5,26 @@ import time
 import pygame
 from pygame import joystick, event, JOYAXISMOTION, JOYHATMOTION
 from pygame import JOYBUTTONUP, JOYBUTTONDOWN
+import signal
+
+try:
+    import joyconfig
+    joyconfig.path.insert(0, '/boot/joyconf')
+    from joyconfig import JOYA,JOYB
+except ImportError as err:
+    logging.warn(err, exc_info=True)
+    logging.warn("Failed to load config using defult")
+    # array index is axis > ppm channel, -1 to skip
+    # this example, asign joy axis 0 to chanel 0, joy axis 1 to chanel 1 etc. etc.
+    # AETR presumed x = 0, y = 1, twist = 2, throttle = 3
+    JOYA = [0, 1, 3, 2]
+    # a 5 axis joystick ignoring axis 2 would be as follows
+    #JOYA = [0, 1, -1, 2, 3]
+    # a 4 axis joystick swapping axies 0 and 1 would be as follows
+    #JOYA = [1, 0, 2, 3]
+    # array index is button > ppm channel, -1 to skip
+    # this example, asign joy button 0 to chanel 4, joy button 1 to chanel 5 etc. etc.
+    JOYB = [4, 5, 6, 7]
 
 try:
     import pigpio
@@ -12,6 +32,7 @@ except ImportError as err:
     logging.warn(err, exc_info=True)
     logging.warn("Failed to load pigpio library, running in debug mode")
     pigpio = None
+    
 #pigpio = None
 RUNNING = False
 PI_PPM = 24
@@ -21,19 +42,7 @@ pinst = None
 waves = [None, None, None]
 channelsglb = [0, 0, 0, 0, 0, 0, 0, 0]
 trimglb = [0, 0, 0, 0, 0, 0, 0, 0]
-# array index is axis > ppm channel, -1 to skip
-# this example, asign joy axis 0 to chanel 0, joy axis 1 to chanel 1 etc. etc.
-# AETR presumed x = 0, y = 1, twist = 2, throttle = 3
-JOYA = [0, 1, 3, 2]
-# a 5 axis joystick ignoring axis 2 would be as follows
-#JOYA = [0, 1, -1, 2, 3]
-# a 4 axis joystick swapping axies 0 and 1 would be as follows
-#JOYA = [1, 0, 2, 3]
 
-
-# array index is button > ppm channel, -1 to skip
-# this example, asign joy button 0 to chanel 4, joy button 1 to chanel 5 etc. etc.
-JOYB = [4, 5, 6, 7]
 def readjoythread():
     """Read joystick loop and pass result onto processor"""
     global channelsglb, trimglb
@@ -71,7 +80,6 @@ def readjoythread():
                 output[JOYB[evt.button]] = -1 if evt.type == JOYBUTTONUP else 1
                 haschanged = True
         if haschanged:
-            pinst.write(16,1)
             channelsglb=output[:]
             trimglb=trim[:]
 def processoutput():
@@ -79,7 +87,6 @@ def processoutput():
     global pinst, waves, channelsglb, trimglb
     
     while RUNNING:
-        pinst.write(16,0)
         channels = channelsglb[:]
         trim = trimglb[:]
         for i in range(0, len(channels)):
@@ -112,11 +119,15 @@ def processoutput():
                 outputchan.append(uss)
             logging.warn(channels)
             logging.warn(outputchan)
-        time.sleep(.02)    
+        time.sleep(.02)
+
+def shutdown(signum, frame):
+    global RUNNING
+    RUNNING = False
 
 def main():
     """Main Entry point"""
-    global pinst,pinst2, waves
+    global pinst, waves
     if pigpio:
         pinst = pigpio.pi()
         pinst.set_mode(PI_PPM, pigpio.OUTPUT)
@@ -135,5 +146,7 @@ def main():
 
 if __name__ == '__main__':
     RUNNING = True
-    #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+    signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+    signal.signal(signal.SIGTERM, shutdown)
+    signal.signal(signal.SIGINT, shutdown)
     main()

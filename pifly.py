@@ -9,8 +9,8 @@ import signal
 
 try:
     import joyconfig
-    joyconfig.path.insert(0, '/boot/joyconf')
-    from joyconfig import JOY_AXIES,JOYB
+    joyconfig.path.insert(0, '/boot/joyconfig')
+    from joyconfig import JOY_AXIES,JOY_BUTTONS
 except ImportError as err:
     logging.warn(err, exc_info=True)
     logging.warn("Failed to load config using defult")
@@ -24,7 +24,7 @@ except ImportError as err:
     #JOYA = [1, 0, 2, 3]
     # array index is button > ppm channel, -1 to skip
     # this example, asign joy button 0 to chanel 4, joy button 1 to chanel 5 etc. etc.
-    JOYB = [4, 5, 6, 7]
+    JOY_BUTTONS = [4, 5, 6, 7]
     JOY_REVERSE = [False, False, False, False, False, False, False, False]
 
 try:
@@ -60,7 +60,7 @@ def readjoythread():
             output[JOY_AXIES[i]] = round(joystick.Joystick(0).get_axis(i), 4)
             if output[JOY_AXIES[i]] is None:
                 output[JOY_AXIES[i]] = 0
-    for chan in JOYB:
+    for chan in JOY_BUTTONS:
         output[chan] = -1
 
     channelsglb = output[:]
@@ -77,8 +77,8 @@ def readjoythread():
             trim[1] = trim[1] + 0 - (round((evt.value[1] * .01), 4))
             haschanged = True
         elif evt.type == JOYBUTTONUP or evt.type == JOYBUTTONDOWN:
-            if evt.button < len(JOYB) and JOYB[evt.button] > -1:
-                output[JOYB[evt.button]] = -1 if evt.type == JOYBUTTONUP else 1
+            if evt.button < len(JOY_BUTTONS) and JOY_BUTTONS[evt.button] > -1:
+                output[JOY_BUTTONS[evt.button]] = -1 if evt.type == JOYBUTTONUP else 1
                 haschanged = True
         if haschanged:
             channelsglb=output[:]

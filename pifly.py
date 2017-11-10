@@ -76,6 +76,19 @@ def readjoythread():
         if haschanged:
             channelsglb=output[:]
             trimglb=trim[:]
+
+def flashlight():
+    global pinst
+    while RUNNING:
+        pinst.write(47,1)
+        time.sleep(.2)
+        pinst.write(47,0)
+        time.sleep(.2)
+        pinst.write(47,1)
+        time.sleep(.2)
+        pinst.write(47,0)
+        time.sleep(.7)
+
 def processoutput():
     """process outout and send wave to pigpio"""
     global pinst, waves, channelsglb, trimglb
@@ -128,12 +141,14 @@ def main():
     if pigpio:
         pinst = pigpio.pi()
         pinst.set_mode(PI_PPM, pigpio.OUTPUT)
+        pinst.set_mode(47, pigpio.OUTPUT)
         pinst.wave_add_generic([pigpio.pulse(PI_GPIO, 0, 2000)])
         # padding to make deleting logic easier
         waves = [None, None, pinst.wave_create()]
         pinst.wave_send_repeat(waves[-1])
 
     pygame.init()
+    thread.start_new_thread(flashlight, ())
     thread.start_new_thread(readjoythread, ())
     thread.start_new_thread(processoutput, ())
     while RUNNING:

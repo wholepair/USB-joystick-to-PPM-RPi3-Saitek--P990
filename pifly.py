@@ -17,8 +17,8 @@ JOY_AXIES = [0, 1, 3, 2]
 #JOYA = [1, 0, 2, 3]
 # array index is button > ppm channel, -1 to skip
 # this example, asign joy button 0 to chanel 4, joy button 1 to chanel 5 etc. etc.
-JOY_BUTTONS = [4, 5, 6, 7]
-JOY_REVERSE = [False, False, False, False, False, False, False, False]
+JOY_BUTTONS = [4, 5,]
+JOY_REVERSE = [False, False, False, False, False, False]
 
 try:
     import pigpio
@@ -34,14 +34,14 @@ PI_GPIO = 1 << PI_PPM
 
 pinst = None
 waves = [None, None, None]
-channelsglb = [0, 0, 0, 0, 0, 0, 0, 0]
-trimglb = [0, 0, 0, 0, 0, 0, 0, 0]
+channelsglb = [0, 0, 0, 0, 0, 0]
+trimglb = [0, 0, 0, 0, 0, 0]
 
 def readjoythread():
     """Read joystick loop and pass result onto processor"""
     global channelsglb, trimglb
-    output = [0, 0, 0, 0, 0, 0, 0, 0]
-    trim = [0, 0, 0, 0, 0, 0, 0, 0]
+    output = [0, 0, 0, 0, 0, 0]
+    trim = [0, 0, 0, 0, 0, 0]
     joystick.init()
     joystick.Joystick(0).init()
     time.sleep(1)
@@ -76,18 +76,6 @@ def readjoythread():
         if haschanged:
             channelsglb=output[:]
             trimglb=trim[:]
-
-def flashlight():
-    global pinst
-    while RUNNING:
-        pinst.write(47,1)
-        time.sleep(.2)
-        pinst.write(47,0)
-        time.sleep(.2)
-        pinst.write(47,1)
-        time.sleep(.2)
-        pinst.write(47,0)
-        time.sleep(.7)
 
 def processoutput():
     """process outout and send wave to pigpio"""
@@ -141,14 +129,12 @@ def main():
     if pigpio:
         pinst = pigpio.pi()
         pinst.set_mode(PI_PPM, pigpio.OUTPUT)
-        pinst.set_mode(47, pigpio.OUTPUT)
         pinst.wave_add_generic([pigpio.pulse(PI_GPIO, 0, 2000)])
         # padding to make deleting logic easier
         waves = [None, None, pinst.wave_create()]
         pinst.wave_send_repeat(waves[-1])
 
     pygame.init()
-    thread.start_new_thread(flashlight, ())
     thread.start_new_thread(readjoythread, ())
     thread.start_new_thread(processoutput, ())
     while RUNNING:

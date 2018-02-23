@@ -4,7 +4,7 @@
 1. Calibrate joystick, see [`jscal`](http://linux.die.net/man/1/jscal). Also the related `jstest`, `jscal-store`, and
 `jscal-restore`.
 
-2. [Configure channel mapping]
+2. [Configure channel mapping] in pifly.py
 
 ### Wiring
 

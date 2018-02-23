@@ -1,4 +1,6 @@
-"""py joy  fly stick"""
+"""6 Channel PPM output to test motor controler"""
+"""https://github.com/NiklasFauth/hoverboard-firmware-hack"""
+
 import thread
 import logging
 import time
@@ -10,7 +12,7 @@ import signal
 # array index is axis > ppm channel, -1 to skip
 # this example, asign joy axis 0 to chanel 0, joy axis 1 to chanel 1 etc. etc.
 # AETR presumed x = 0, y = 1, twist = 2, throttle = 3
-JOY_AXIES = [0, 1, 3, 2]
+JOY_AXIES = [1, 2, 0, 3]
 # a 5 axis joystick ignoring axis 2 would be as follows
 #JOYA = [0, 1, -1, 2, 3]
 # a 4 axis joystick swapping axies 0 and 1 would be as follows

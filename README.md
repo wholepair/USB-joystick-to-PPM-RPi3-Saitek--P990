@@ -10,4 +10,8 @@
 
 1. 5V &rarr; Raspberry Pi
 
-2. Raspberry PPM output &rarr; transmitter trainer port
+2. Raspberry PPM output &rarr; PA3 of the HoverBoard Motor Driver
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/GKCCr2PvbXY/0.jpg)](https://www.youtube.com/watch?time_continue=4&v=GKCCr2PvbXY)
+
+
